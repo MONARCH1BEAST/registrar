@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Student Record Manager mark">
+  <rect width="64" height="64" rx="10" fill="#0d5c4a"/>
+  <path d="M16 18h32M16 28h32M16 38h23" fill="none" stroke="#f4f1ea" stroke-linecap="square" stroke-width="5"/>
+  <rect x="41" y="36" width="9" height="9" fill="#dcae4d"/>
+</svg>

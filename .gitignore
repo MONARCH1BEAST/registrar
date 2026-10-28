@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.DS_Store
+.env
+.env.*
+!.env.example
+data/*.db
+data/*.log
+data/*.db-journal
+data/activity.txt
+data/backup.pkl
+data/export.csv
+data/results.json
+data/report.txt

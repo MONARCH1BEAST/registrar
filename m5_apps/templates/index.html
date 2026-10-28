@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+<!-- CONCEPT: Jinja template inheritance and dynamic assignment table -->
+{% block title %}Assignment dashboard{% endblock %}
+{% block heading %}Assignment dashboard{% endblock %}
+{% block header_action %}<a class="btn btn-primary" href="{{ url_for('add_assignment') }}">+ New Assignment</a>{% endblock %}
+{% block content %}
+<section class="summary-grid" aria-label="Registrar summary">
+  <article class="summary-card"><span class="card-label">Assignments</span><strong>{{ summary.assignments }}</strong><span class="card-note">in the registrar</span></article>
+  <article class="summary-card"><span class="card-label">Submissions</span><strong>{{ summary.submissions }}</strong><span class="card-note">received from students</span></article>
+  <article class="summary-card"><span class="card-label">Upcoming</span><strong>{{ summary.upcoming }}</strong><span class="card-note">due today or later</span></article>
+</section>
+<section class="table-section" aria-labelledby="assignment-list-heading">
+  <div class="section-heading"><div><p class="eyebrow">Coursework</p><h2 id="assignment-list-heading">All assignments</h2></div><span class="result-count">{{ assignments|length }} total</span></div>
+  <div class="table-wrap">
+    <table class="data-table">
+      <caption class="sr-only">Assignments and submission counts</caption>
+      <thead><tr><th scope="col">Title</th><th scope="col">Max Marks</th><th scope="col">Due Date</th><th scope="col">Submission Count</th><th scope="col">Actions</th></tr></thead>
+      <tbody>
+      {% for assignment in assignments %}
+        <tr><td><a class="item-link" href="{{ url_for('assignment_detail', id=assignment.id) }}">{{ assignment.title }}</a></td>
+          <td class="numeric">{{ assignment.max_marks }}</td><td><time datetime="{{ assignment.due_date }}">{{ assignment.due_date }}</time></td>
+          <td>{{ assignment.submission_count }}</td>
+          <td><div class="action-buttons">
+            <a href="{{ url_for('assignment_detail', id=assignment.id) }}" class="btn-cancel" style="text-decoration: none; padding: 8px 16px;">View Submissions</a>
+            <form method="POST" action="{{ url_for('delete_assignment', assignment_id=assignment.id) }}" class="delete-form" style="margin: 0;">
+              <button type="button" class="btn-cancel delete-btn" style="color: #c0392b; border-color: #c0392b; padding: 8px 16px;">Delete</button>
+            </form>
+          </div></td></tr>
+      {% else %}<tr><td class="empty-state" colspan="5">No assignments have been added yet.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+<div id="deleteModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle" aria-describedby="deleteModalMessage">
+  <div class="modal-box">
+    <h3 id="deleteModalTitle">Confirm Deletion</h3>
+    <p id="deleteModalMessage">Are you sure?</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" type="button" onclick="closeModal()">Cancel</button>
+      <button class="btn-danger" type="button" id="modalConfirmBtn" onclick="executePendingAction()">Delete</button>
+    </div>
+  </div>
+</div>
+<script>
+  let actionToExecute = null;
+  let previouslyFocusedElement = null;
+
+  function showModal(title, message, action) {
+    const modal = document.getElementById("deleteModal");
+    document.getElementById("deleteModalTitle").innerText = title;
+    document.getElementById("deleteModalMessage").innerText = message;
+    actionToExecute = action;
+    previouslyFocusedElement = document.activeElement;
+    modal.classList.remove("hidden");
+    document.getElementById("modalConfirmBtn").focus();
+  }
+
+  function closeModal() {
+    document.getElementById("deleteModal").classList.add("hidden");
+    actionToExecute = null;
+    if (previouslyFocusedElement) previouslyFocusedElement.focus();
+  }
+
+  function executePendingAction() {
+    const action = actionToExecute;
+    closeModal();
+    if (action) action();
+  }
+
+  document.querySelectorAll(".delete-btn").forEach(function (button) {
+    button.addEventListener("click", function (event) {
+      event.preventDefault();
+      const form = this.closest(".delete-form");
+      showModal(
+        "Delete Assignment",
+        "Deleting this assignment will also delete all student submissions for it. Are you sure?",
+        function () { if (form) form.submit(); }
+      );
+    });
+  });
+
+  const deleteModal = document.getElementById("deleteModal");
+  deleteModal.addEventListener("click", function (event) {
+    if (event.target === deleteModal) closeModal();
+  });
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && !deleteModal.classList.contains("hidden")) closeModal();
+  });
+</script>
+{% endblock %}

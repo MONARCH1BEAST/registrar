@@ -1,0 +1,7 @@
+{
+  "routes": [
+    {"path": "/", "title": "Student outcomes"},
+    {"path": "/student/:roll", "title": "Student detail"},
+    {"path": "/add", "title": "Add student"}
+  ]
+}

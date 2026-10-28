@@ -1,0 +1,5 @@
+Flask>=3.0,<4.0
+requests>=2.31,<3.0
+beautifulsoup4>=4.12,<5.0
+# Optional: install only for m3_data.mysql_demo
+# mysql-connector-python>=8.0

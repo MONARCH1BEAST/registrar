@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+<!-- CONCEPT: HTML form submission and Jinja feedback -->
+{% block title %}New Student{% endblock %}
+{% block eyebrow %}Student records{% endblock %}
+{% block heading %}New Student{% endblock %}
+{% block content %}
+<section class="form-panel">
+  <p class="form-intro">Add a student to {{ batch.name }} · {{ batch.year }}.</p>
+  {% if error is defined %}<p class="form-error" role="alert">{{ error }}</p>{% endif %}
+  <form method="post" action="{{ url_for('add_student', batch_id=batch.id) }}">
+    <input type="hidden" name="batch_id" value="{{ batch.id }}">
+    <div class="form-grid">
+      <div class="field"><label for="roll">Roll number</label><input id="roll" name="roll" type="text" value="{{ values.get('roll', '') if values is defined else '' }}" required></div>
+      <div class="field"><label for="name">Student name</label><input id="name" name="name" value="{{ values.get('name', '') if values is defined else '' }}" autocomplete="name" required></div>
+    </div>
+    <div class="form-actions"><a class="btn btn-secondary" href="{{ url_for('batch_detail', batch_id=batch.id) }}">Cancel</a><button class="btn btn-primary" type="submit">Save Student</button></div>
+  </form>
+</section>
+{% endblock %}

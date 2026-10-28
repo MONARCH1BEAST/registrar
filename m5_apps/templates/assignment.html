@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+<!-- CONCEPT: Jinja template inheritance and master-detail rendering -->
+{% block title %}{{ assignment.title }}{% endblock %}
+{% block eyebrow %}Assignment details{% endblock %}
+{% block heading %}{{ assignment.title }}{% endblock %}
+{% block header_action %}<a class="btn btn-primary" href="{{ url_for('add_submission', id=assignment.id) }}">+ Add Submission</a>{% endblock %}
+{% block content %}
+<section class="detail-card" aria-label="Assignment details">
+  <div><span class="card-label">Maximum marks</span><strong>{{ assignment.max_marks }}</strong></div>
+  <div><span class="card-label">Due date</span><strong><time datetime="{{ assignment.due_date }}">{{ assignment.due_date }}</time></strong></div>
+  <div><span class="card-label">Submissions</span><strong>{{ submissions|length }}</strong></div>
+</section>
+<section class="table-section" aria-labelledby="submission-list-heading">
+  <div class="section-heading"><div><p class="eyebrow">Student work</p><h2 id="submission-list-heading">Submissions</h2></div><span class="result-count">{{ submissions|length }} total</span></div>
+  <div class="table-wrap"><table class="data-table">
+    <caption class="sr-only">Submissions for {{ assignment.title }}</caption>
+    <thead><tr><th scope="col">Name</th><th scope="col">Roll</th><th scope="col">Marks</th><th scope="col">Date</th><th scope="col">Action</th></tr></thead>
+    <tbody>{% for submission in submissions %}
+      <tr><td>{{ submission.name }}</td><td class="numeric">{{ submission.roll }}</td><td class="numeric">{{ submission.marks }}</td>
+        <td><time datetime="{{ submission.submitted_on }}">{{ submission.submitted_on }}</time></td>
+        <td><form method="post" action="{{ url_for('remove_submission', id=submission.id) }}" onsubmit="return confirm('Delete this submission?');">
+          <button class="btn btn-secondary" type="submit">Delete</button>
+        </form></td></tr>
+    {% else %}<tr><td class="empty-state" colspan="5">No submissions for this assignment yet.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endblock %}

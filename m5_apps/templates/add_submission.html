@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+<!-- CONCEPT: HTML form submission and assignment-linked records -->
+{% block title %}Add submission{% endblock %}
+{% block eyebrow %}Student work{% endblock %}
+{% block heading %}Add a submission{% endblock %}
+{% block content %}
+<section class="form-panel">
+  <p class="form-intro">Record a student's work for an assignment.</p>
+  {% if form_error %}<p class="form-error" role="alert">{{ form_error }}</p>{% endif %}
+  <form method="post" action="{{ url_for('add_submission', id=assignment.id) }}">
+    <div class="form-grid">
+      <div class="field field-wide">
+        <span class="card-label">Assignment</span><strong>{{ assignment.title }}</strong>
+      </div>
+      <div class="field field-wide">
+        <label for="batchSelect" style="display: block; font-weight: bold; margin-bottom: 5px;">Batch</label>
+        <select id="batchSelect" required style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;">
+          <option value="">Select a batch</option>
+          {% for batch in batches %}
+            <option value="{{ batch.id }}" {% if selected_batch_id|string == batch.id|string %}selected{% endif %}>{{ batch.name }} - {{ batch.year }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field field-wide">
+        <label for="studentSelect" style="display: block; font-weight: bold; margin-bottom: 5px;">Student</label>
+        <select name="roll" id="studentSelect" required style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;">
+          <option value="">Select a student</option>
+          {% for student in students %}
+            <option value="{{ student.roll }}" data-batch="{{ student.batch_id }}" {% if values.get('roll', '')|string == student.roll|string %}selected{% endif %}>{{ student.name }} ({{ student.roll }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field field-wide"><label for="marks">Marks</label><input id="marks" name="marks" type="number" min="0" max="{{ assignment.max_marks }}" step="0.1" value="{{ values.get('marks', '') }}" required></div>
+      <div class="field"><label for="submitted_on">Submitted on</label><input id="submitted_on" name="submitted_on" type="date" value="{{ values.get('submitted_on', submitted_on) }}" required></div>
+    </div>
+    <div class="form-actions"><a class="btn btn-secondary" href="{{ url_for('assignment_detail', id=assignment.id) }}">Cancel</a><button class="btn btn-primary" type="submit" {% if not students %}disabled{% endif %}>Save Submission</button></div>
+  </form>
+</section>
+<script>
+  const batchSelect = document.getElementById("batchSelect");
+  const studentSelect = document.getElementById("studentSelect");
+
+  function filterStudentsByBatch() {
+    const selectedBatch = batchSelect.value;
+    const selectedRoll = studentSelect.value;
+
+    for (let i = 0; i < studentSelect.options.length; i++) {
+      const option = studentSelect.options[i];
+      if (option.value === "") continue;
+      option.style.display = selectedBatch === "" || option.getAttribute("data-batch") === selectedBatch ? "" : "none";
+    }
+
+    studentSelect.value = "";
+    if (selectedBatch !== "") {
+      for (let i = 0; i < studentSelect.options.length; i++) {
+        const option = studentSelect.options[i];
+        if (option.value === selectedRoll && option.getAttribute("data-batch") === selectedBatch) {
+          studentSelect.value = option.value;
+          break;
+        }
+      }
+    }
+  }
+
+  batchSelect.addEventListener("change", filterStudentsByBatch);
+  if (batchSelect.value !== "") filterStudentsByBatch();
+</script>
+{% endblock %}

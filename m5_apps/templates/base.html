@@ -1,0 +1,55 @@
+<!doctype html>
+<!-- CONCEPT: Shared Jinja layout and named content blocks -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Student Hub{% endblock %} · {{ school }}</title>
+  <meta name="description" content="Assignment and submission registrar for {{ school }}.">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container" aria-live="polite">
+        {% for category, message in messages %}
+          <div class="flash-message flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Primary navigation">
+      <a class="brand" href="{{ url_for('index') }}"><span class="brand-mark" aria-hidden="true">S</span>
+        <span class="brand-copy"><strong>Student Hub</strong><small>Academic registrar</small></span>
+      </a>
+      <nav class="sidebar-nav">
+        <a class="nav-link {% if request.endpoint in ('index', 'add_assignment', 'assignment_detail', 'add_submission') %}active{% endif %}" href="{{ url_for('index') }}">Assignments</a>
+        <a class="nav-link {% if request.endpoint in ('batches', 'add_batch', 'batch_detail', 'add_student', 'import_students', 'delete_student', 'delete_selected', 'clear_all_students') %}active{% endif %}" href="{{ url_for('batches') }}">Batches</a>
+      </nav>
+      <div class="sidebar-footer"><span>Academic year</span><strong>{{ academic_year }}</strong></div>
+    </aside>
+    <main id="main-content" class="main-content">
+      <header class="top-header">
+        <div><p class="eyebrow">Learning and assessment</p><p class="school-name">{{ school }}</p></div>
+        <span class="academic-year">{{ academic_year }}</span>
+      </header>
+      <section class="page-heading">
+        <div><p class="eyebrow">{% block eyebrow %}Assignment registrar{% endblock %}</p>
+          <h1>{% block heading %}Student Hub{% endblock %}</h1></div>
+        {% block header_action %}{% endblock %}
+      </section>
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  <script>
+    document.querySelectorAll(".flash-message").forEach(function (message) {
+      window.setTimeout(function () {
+        message.classList.add("flash-hidden");
+        window.setTimeout(function () { message.remove(); }, 350);
+      }, 4000);
+    });
+  </script>
+</body>
+</html>

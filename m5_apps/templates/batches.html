@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Batch Directory{% endblock %}
+{% block eyebrow %}Registrar records{% endblock %}
+{% block heading %}Batch Directory{% endblock %}
+{% block header_action %}<button type="button" onclick="openBatchModal()" class="btn-danger">+ New Batch</button>{% endblock %}
+{% block content %}
+<section class="table-section" aria-labelledby="batches-title">
+  <div class="section-heading">
+    <div><p class="eyebrow">Academic groups</p><h2 id="batches-title">All batches</h2></div>
+    <span class="result-count">{{ batches|length }} total</span>
+  </div>
+  <div class="table-wrap">
+    <table class="data-table">
+      <caption class="sr-only">Batches and their student counts</caption>
+      <thead><tr><th scope="col">Batch Name</th><th scope="col">Year</th><th scope="col">Total Students</th><th scope="col">Actions</th></tr></thead>
+      <tbody>
+      {% for batch in batches %}
+        <tr><td>{{ batch.name }}</td><td>{{ batch.year }}</td><td>{{ batch.student_count }}</td>
+          <td><div class="action-buttons">
+            <a href="{{ url_for('batch_detail', batch_id=batch.id) }}" class="btn-cancel" style="text-decoration: none; padding: 8px 16px;">View</a>
+            <form method="POST" action="{{ url_for('delete_batch', batch_id=batch.id) }}" class="delete-form" style="margin: 0;">
+              <button type="button" class="btn-cancel delete-btn" style="color: #c0392b; border-color: #c0392b; padding: 8px 16px;">Delete</button>
+            </form>
+          </div></td></tr>
+      {% else %}
+        <tr><td class="empty-state" colspan="4">No batches have been added yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+<div id="batchModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="batchModalTitle">
+  <div class="modal-box" style="text-align: left; max-width: 500px;">
+    <h3 id="batchModalTitle" style="font-family: Georgia, serif; font-size: 24px;">New Batch</h3>
+    <form method="POST" action="{{ url_for('add_batch') }}">
+      <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+        <div style="flex: 1;">
+          <label for="batch-name" style="font-size: 12px; font-weight: bold;">Batch name</label>
+          <input id="batch-name" type="text" name="name" placeholder="B.Tech CS" required style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+        <div style="flex: 1;">
+          <label for="batch-year" style="font-size: 12px; font-weight: bold;">Year</label>
+          <input id="batch-year" type="text" name="year" placeholder="2nd Year" required style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+      </div>
+      <div class="modal-actions" style="justify-content: flex-end;">
+        <button type="button" class="btn-cancel" onclick="closeBatchModal()">Cancel</button>
+        <button type="submit" class="btn-danger">Create Batch</button>
+      </div>
+    </form>
+  </div>
+</div>
+<div id="deleteModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle" aria-describedby="deleteModalMessage">
+  <div class="modal-box">
+    <h3 id="deleteModalTitle">Confirm Deletion</h3>
+    <p id="deleteModalMessage">Are you sure?</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" type="button" onclick="closeModal()">Cancel</button>
+      <button class="btn-danger" type="button" id="modalConfirmBtn" onclick="executePendingAction()">Delete</button>
+    </div>
+  </div>
+</div>
+<script>
+  let actionToExecute = null;
+  let previouslyFocusedElement = null;
+
+  function openBatchModal() {
+    document.getElementById("batchModal").classList.remove("hidden");
+  }
+
+  function closeBatchModal() {
+    document.getElementById("batchModal").classList.add("hidden");
+  }
+
+  function showModal(title, message, action) {
+    const modal = document.getElementById("deleteModal");
+    document.getElementById("deleteModalTitle").innerText = title;
+    document.getElementById("deleteModalMessage").innerText = message;
+    actionToExecute = action;
+    previouslyFocusedElement = document.activeElement;
+    modal.classList.remove("hidden");
+    document.getElementById("modalConfirmBtn").focus();
+  }
+
+  function closeModal() {
+    document.getElementById("deleteModal").classList.add("hidden");
+    actionToExecute = null;
+    if (previouslyFocusedElement) previouslyFocusedElement.focus();
+  }
+
+  function executePendingAction() {
+    const action = actionToExecute;
+    closeModal();
+    if (action) action();
+  }
+
+  document.querySelectorAll(".delete-btn").forEach(function (button) {
+    button.addEventListener("click", function (event) {
+      event.preventDefault();
+      const form = this.closest(".delete-form");
+      showModal(
+        "Delete Batch",
+        "Warning: Deleting this batch will also delete ALL students and submissions inside it. Are you sure?",
+        function () { if (form) form.submit(); }
+      );
+    });
+  });
+
+  const deleteModal = document.getElementById("deleteModal");
+  deleteModal.addEventListener("click", function (event) {
+    if (event.target === deleteModal) closeModal();
+  });
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && !deleteModal.classList.contains("hidden")) closeModal();
+  });
+</script>
+{% endblock %}

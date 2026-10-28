@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+<!-- CONCEPT: Jinja template inheritance and batch-specific student directory -->
+{% block title %}{{ batch.name }} {{ batch.year }} - Students{% endblock %}
+{% block eyebrow %}Registrar records{% endblock %}
+{% block heading %}{{ batch.name }} {{ batch.year }} - Students{% endblock %}
+{% block header_action %}
+<div class="student-actions">
+  <a class="btn btn-primary" href="{{ url_for('add_student', batch_id=batch.id) }}">+ New Student</a>
+  <form method="post" action="{{ url_for('import_students', batch_id=batch.id) }}" enctype="multipart/form-data">
+    <label class="btn btn-secondary" for="csv_file">Bulk Import (CSV)</label>
+    <input id="csv_file" type="file" name="csv_file" accept=".csv,text/csv" hidden onchange="this.form.submit()">
+    <small class="card-note">CSV format: roll, name</small>
+  </form>
+</div>
+{% endblock %}
+{% block content %}
+<section class="table-section" aria-labelledby="students-title">
+  <div class="section-heading"><div><p class="eyebrow">Enrolled students</p><h2 id="students-title">{{ batch.name }} · {{ batch.year }}</h2></div>
+    <span class="result-count">{{ students|length }} total</span></div>
+  <form id="bulkDeleteForm" method="post" action="{{ url_for('delete_selected', batch_id=batch.id) }}">
+    <div class="table-wrap">
+      <table class="data-table">
+        <caption class="sr-only">Student directory and total submission counts</caption>
+        <thead><tr><th scope="col"><input type="checkbox" id="selectAll" aria-label="Select all students"></th><th scope="col">Roll</th><th scope="col">Name</th><th scope="col">Submissions</th><th scope="col">Actions</th></tr></thead>
+        <tbody>
+        {% for student in students %}
+          <tr><td><input type="checkbox" name="selected_students" value="{{ student.roll }}" aria-label="Select {{ student.name }}"></td><td class="numeric">{{ student.roll }}</td><td>{{ student.name }}</td><td>{{ student.submission_count }}</td>
+            <td><button class="btn btn-secondary single-delete-btn" type="button" data-form-id="delete-form-{{ student.roll }}" data-student-name="{{ student.name }}">Delete</button></td></tr>
+        {% else %}
+          <tr><td class="empty-state" colspan="5">No students have been added to this batch yet.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-danger">Delete Selected</button>
+      <button type="button" class="btn btn-danger" onclick="confirmClearAll()">Clear All</button>
+    </div>
+  </form>
+  {% for student in students %}
+    <form id="delete-form-{{ student.roll }}" method="post" action="{{ url_for('delete_student', batch_id=batch.id, roll=student.roll) }}"></form>
+  {% endfor %}
+  <form id="clearAllForm" method="post" action="{{ url_for('clear_all_students', batch_id=batch.id) }}"></form>
+</section>
+<div id="customModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalMessage">
+  <div class="modal-box">
+    <h3 id="modalTitle">Confirm Deletion</h3>
+    <p id="modalMessage">Are you sure?</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" type="button" onclick="closeModal()">Cancel</button>
+      <button class="btn-danger" type="button" id="modalConfirmBtn" onclick="executePendingAction()">Delete</button>
+    </div>
+  </div>
+</div>
+<script>
+  let actionToExecute = null;
+  let previouslyFocusedElement = null;
+
+  function showModal(title, message, action) {
+    const modal = document.getElementById("customModal");
+    document.getElementById("modalTitle").innerText = title;
+    document.getElementById("modalMessage").innerText = message;
+    actionToExecute = action;
+    previouslyFocusedElement = document.activeElement;
+    modal.classList.remove("hidden");
+    document.getElementById("modalConfirmBtn").focus();
+  }
+
+  function closeModal() {
+    document.getElementById("customModal").classList.add("hidden");
+    actionToExecute = null;
+    if (previouslyFocusedElement) previouslyFocusedElement.focus();
+  }
+
+  function executePendingAction() {
+    const action = actionToExecute;
+    closeModal();
+    if (action) action();
+  }
+
+  function confirmClearAll() {
+    showModal(
+      "Clear All Students",
+      "Are you sure you want to delete ALL students in this batch? This cannot be undone.",
+      function () { document.getElementById("clearAllForm").submit(); }
+    );
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const bulkDeleteForm = document.getElementById("bulkDeleteForm");
+    const selectAll = document.getElementById("selectAll");
+    const modal = document.getElementById("customModal");
+
+    if (selectAll) {
+      selectAll.addEventListener("change", function () {
+        document.querySelectorAll('input[name="selected_students"]').forEach(function (checkbox) {
+          checkbox.checked = selectAll.checked;
+        });
+      });
+    }
+
+    if (bulkDeleteForm) {
+      bulkDeleteForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        const checkedCount = document.querySelectorAll('input[name="selected_students"]:checked').length;
+        if (checkedCount === 0) {
+          bulkDeleteForm.submit();
+          return;
+        }
+        showModal(
+          "Delete Selected",
+          "Are you sure you want to delete " + checkedCount + " selected student(s)?",
+          function () { bulkDeleteForm.submit(); }
+        );
+      });
+    }
+
+    document.querySelectorAll(".single-delete-btn").forEach(function (button) {
+      button.addEventListener("click", function () {
+        const form = document.getElementById(button.dataset.formId);
+        showModal(
+          "Delete Student",
+          "Are you sure you want to delete " + button.dataset.studentName + "? This will also delete all their submissions.",
+          function () { if (form) form.submit(); }
+        );
+      });
+    });
+
+    modal.addEventListener("click", function (event) {
+      if (event.target === modal) closeModal();
+    });
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && !modal.classList.contains("hidden")) closeModal();
+    });
+  });
+</script>
+{% endblock %}
